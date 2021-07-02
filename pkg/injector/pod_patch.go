@@ -67,6 +67,8 @@ const (
 	sidecarInternalGRPCPort           = 50002
 	userContainerDaprHTTPPortName     = "DAPR_HTTP_PORT"
 	userContainerDaprGRPCPortName     = "DAPR_GRPC_PORT"
+	podName                           = "POD_NAME"
+	podNameFieldPath                  = "metadata.namee"
 	apiAddress                        = "dapr-api"
 	placementService                  = "dapr-placement-server"
 	sentryService                     = "dapr-sentry"
@@ -584,6 +586,10 @@ func getSidecarContainer(annotations map[string]string, id, daprSidecarImage, im
 			{
 				Name:  "NAMESPACE",
 				Value: namespace,
+			},
+			{
+				Name:      podName,
+				ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: podNameFieldPath}},
 			},
 		},
 		Args: args,
