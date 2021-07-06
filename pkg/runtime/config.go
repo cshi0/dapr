@@ -6,9 +6,6 @@
 package runtime
 
 import (
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
-
 	config "github.com/dapr/dapr/pkg/config/modes"
 	"github.com/dapr/dapr/pkg/credentials"
 	"github.com/dapr/dapr/pkg/modes"
@@ -36,29 +33,26 @@ const (
 
 // Config holds the Dapr Runtime configuration.
 type Config struct {
-	ID                     string
-	HTTPPort               int
-	ProfilePort            int
-	EnableProfiling        bool
-	APIGRPCPort            int
-	InternalGRPCPort       int
-	ApplicationPort        int
-	ApplicationProtocol    Protocol
-	Mode                   modes.DaprMode
-	PlacementAddresses     []string
-	GlobalConfig           string
-	AllowedOrigins         string
-	Standalone             config.StandaloneConfig
-	Kubernetes             config.KubernetesConfig
-	MaxConcurrency         int
-	mtlsEnabled            bool
-	SentryServiceAddress   string
-	CertChain              *credentials.CertChain
-	AppSSL                 bool
-	MaxRequestBodySize     int
-	ApplicationProbingPort int
-	AppContainer           *corev1.Container
-	Pod                    *v1.Pod
+	ID                   string
+	HTTPPort             int
+	ProfilePort          int
+	EnableProfiling      bool
+	APIGRPCPort          int
+	InternalGRPCPort     int
+	ApplicationPort      int
+	ApplicationProtocol  Protocol
+	Mode                 modes.DaprMode
+	PlacementAddresses   []string
+	GlobalConfig         string
+	AllowedOrigins       string
+	Standalone           config.StandaloneConfig
+	Kubernetes           config.KubernetesConfig
+	MaxConcurrency       int
+	mtlsEnabled          bool
+	SentryServiceAddress string
+	CertChain            *credentials.CertChain
+	AppSSL               bool
+	MaxRequestBodySize   int
 }
 
 // NewRuntimeConfig returns a new runtime config.

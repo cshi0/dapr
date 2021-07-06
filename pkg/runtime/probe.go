@@ -6,31 +6,37 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
+
+type PodInfo struct {
+	ApplicationProbingPort int
+	AppContainer           *v1.Container
+	Pod                    *v1.Pod
+}
 
 const portScanTimeout = 100 * time.Millisecond
 
 func (rt *DaprRuntime) ProbeApplicationAvailability() (bool, error) {
-	if rt.runtimeConfig.Pod != nil && rt.runtimeConfig.AppContainer != nil {
-		podStatus := rt.runtimeConfig.Pod.Status
+	if rt.podInfo.Pod != nil && rt.podInfo.AppContainer != nil {
+		podStatus := rt.podInfo.Pod.Status
 
-		appContainerState := getContainerStatusByName(&podStatus, rt.runtimeConfig.AppContainer.Name)
+		appContainerState := getContainerStatusByName(&podStatus, rt.podInfo.AppContainer.Name)
 		if appContainerState == nil {
-			return false, fmt.Errorf("cannot find container %v in pod %v", rt.runtimeConfig.AppContainer.Name, rt.runtimeConfig.Pod.Name)
+			return false, fmt.Errorf("cannot find container %v in pod %v", rt.podInfo.AppContainer.Name, rt.podInfo.Pod.Name)
 		} else if appContainerState.Running == nil {
 			return false, nil
 		}
 	}
 
-	if rt.runtimeConfig.ApplicationProbingPort != 0 {
-		return scanLocalPort(rt.runtimeConfig.ApplicationProbingPort, portScanTimeout), nil
-	} else {
+	if rt.podInfo.ApplicationProbingPort != 0 {
+		return scanLocalPort(rt.podInfo.ApplicationProbingPort, portScanTimeout), nil
+	} else { // if no container info is found and no port is found, return true by default
 		return true, nil
 	}
 }
 
-func getContainerStatusByName(podStatus *corev1.PodStatus, containerName string) *corev1.ContainerState {
+func getContainerStatusByName(podStatus *v1.PodStatus, containerName string) *v1.ContainerState {
 	for _, status := range podStatus.ContainerStatuses {
 		if status.Name == containerName {
 			return &status.State

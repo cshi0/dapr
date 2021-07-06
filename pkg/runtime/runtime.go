@@ -33,6 +33,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/dapr/components-contrib/bindings"
 	"github.com/dapr/components-contrib/contenttype"
@@ -71,6 +73,10 @@ import (
 	"github.com/dapr/dapr/pkg/runtime/security"
 	"github.com/dapr/dapr/pkg/scopes"
 	"github.com/dapr/dapr/utils"
+)
+
+const (
+	sidecarContainerName = "daprd"
 )
 
 const (
@@ -157,6 +163,8 @@ type DaprRuntime struct {
 	pendingComponentDependents map[string][]components_v1alpha1.Component
 
 	proxy messaging.Proxy
+
+	podInfo PodInfo
 }
 
 type componentPreprocessRes struct {
@@ -381,6 +389,45 @@ func (a *DaprRuntime) initRuntime(opts *runtimeOpts) error {
 	if err != nil {
 		log.Warnf("failed to read from bindings: %s ", err)
 	}
+
+	podInfo := PodInfo{}
+	if a.runtimeConfig.Mode == modes.KubernetesMode {
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+		clientset, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		podInfo.Pod, err = clientset.CoreV1().Pods(a.globalConfig.Namespace).Get(context.TODO(), a.globalConfig.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		containers := podInfo.Pod.Spec.Containers
+
+		if len(containers) == 2 {
+			for _, container := range containers {
+				if container.Name != sidecarContainerName {
+					podInfo.AppContainer = &container
+				}
+			}
+		}
+
+		if a.runtimeConfig.ApplicationPort != 0 {
+			podInfo.ApplicationProbingPort = a.runtimeConfig.ApplicationPort
+		} else if podInfo.AppContainer != nil {
+			containerPorts := podInfo.AppContainer.Ports
+			for _, port := range containerPorts {
+				podInfo.ApplicationProbingPort = int(port.ContainerPort)
+				break
+			}
+		}
+	}
+	log.Infof("!!!PODINFO:%+v", podInfo)
+
 	return nil
 }
 

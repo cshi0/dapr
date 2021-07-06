@@ -223,6 +223,7 @@ func FromFlags() (*DaprRuntime, error) {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
 	return NewDaprRuntime(runtimeConfig, globalConfig, accessControlList), nil
 }
 
